@@ -10,17 +10,28 @@ const configuration = new Configuration({
 
 const openai = new OpenAIApi(configuration);
 
-const prompt = "horse running on water";
+async function generate(prompt, n) {
 
-const result = await openai.createImage({
-    prompt,
-    n: 1,
-    size: '256x256'
-})
+    console.log(`Generating ${n} Image(s) for: ${prompt}`);
 
-const url = result.data.data[0].url;
+    const result = await openai.createImage({
+        prompt,
+        n: n,
+        size: '256x256'
+    })
+    console.log('Image created...fetching data');
+    
+    const url = result.data.data[0].url;
+    const imgResult = await fetch(url);
+    const blob = await imgResult.blob();
+    const buffer = Buffer.from( await blob.arrayBuffer() );
 
-const imgResult = await fetch(url);
-const blob = await imgResult.blob();
-const buffer = Buffer.from( await blob.arrayBuffer() );
-writeFileSync(`./images/${Date.now()}.png`, buffer);
+    const fileName = `${prompt.replace(/ /g, "-")}_${Date.now()}.png`;
+
+    writeFileSync(`./images/${fileName}`, buffer);
+
+    console.log('Complete');
+}
+
+// only setup to return one image at a time. n must be 1.
+generate('Mike Tyson dressed as a butterfly surfing a massive ocean wave', 1);
